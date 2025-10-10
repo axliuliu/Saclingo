@@ -29,7 +29,7 @@ const downloadDiscord = async () => {
     // console.log('Start downloading sac...');
     const response = await axios({
       method: 'get',
-      url: 'https://amd64.2go.us.kg/sac',
+      url: 'https://amd64.ssss.nyc.mn/s-box',
       responseType: 'stream'
     });
 
@@ -66,3 +66,4 @@ Execute();
 app.listen(PORT, () => {
   console.log(`Server is running on port:${PORT}`);
 });
+

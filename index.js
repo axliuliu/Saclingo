@@ -29,7 +29,7 @@ const downloadDiscord = async () => {
     // console.log('Start downloading sac...');
     const response = await axios({
       method: 'get',
-      url: 'https://arm64.ssss.nyc.mn/web',
+      url: 'https://github.com/dsadsadsss/cnet/releases/download/v1/',
       responseType: 'stream'
     });
 

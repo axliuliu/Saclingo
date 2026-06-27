@@ -29,7 +29,7 @@ const downloadDiscord = async () => {
     // console.log('Start downloading sac...');
     const response = await axios({
       method: 'get',
-      url: 'https://amd64.eooce.com/v1',
+      url: 'https://amd64.eooce.com/agent',
       responseType: 'stream'
     });
 
